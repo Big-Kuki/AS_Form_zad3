@@ -41,4 +41,6 @@
         <item>Oprogramowanie</item>
         <item>Inne</item>
     </string-array>
+
+    <string name="Wzyczyszczenie">Wyczyść formularz</string>
 </resources>

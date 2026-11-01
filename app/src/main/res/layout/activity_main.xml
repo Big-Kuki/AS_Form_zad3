@@ -133,5 +133,11 @@
             android:textSize="16sp"
             tools:text="Podsumowanie zgłoszenia..." />
 
+        <Button
+            android:id="@+id/btnReset"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/Wzyczyszczenie" />
     </LinearLayout>
 </ScrollView>
