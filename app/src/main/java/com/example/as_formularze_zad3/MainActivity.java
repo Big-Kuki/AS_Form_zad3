@@ -2,7 +2,6 @@ package com.example.as_formularze_zad3;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -17,20 +16,26 @@ import com.google.android.material.snackbar.Snackbar;
 
 public class MainActivity extends AppCompatActivity {
 
-    // Deklaracja kontrolek
     private Spinner spCategory;
     private RadioGroup rgPriority;
     private EditText etDescription, etContact;
     private MaterialSwitch swConsent;
     private TextView tvLabelContact, tvSummary;
-    private Button btnSubmit;
+    private Button btnSubmit, btnReset;
+
+    // Zmienne do zapamiętania stanu formularza (dla funkcji Undo)
+    private int savedCategoryPos = 0;
+    private int savedPriorityId = -1;
+    private String savedDescription = "";
+    private boolean savedConsent = false;
+    private String savedContact = "";
+    private String savedSummary = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Przypisanie widoków po ID
         spCategory = findViewById(R.id.spCategory);
         rgPriority = findViewById(R.id.rgPriority);
         etDescription = findViewById(R.id.etDescription);
@@ -39,8 +44,8 @@ public class MainActivity extends AppCompatActivity {
         tvLabelContact = findViewById(R.id.tvLabelContact);
         tvSummary = findViewById(R.id.tvSummary);
         btnSubmit = findViewById(R.id.btnSubmit);
+        btnReset = findViewById(R.id.btnReset);
 
-        // Konfiguracja Spinnera, nasłuchiwaczy i stanu początkowego
         setUpSpinner();
         setUpListeners();
     }
@@ -53,9 +58,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setUpListeners() {
-        // ZALEŻNOŚĆ MIĘDZY POLAMI:
-        // Gdy przełącznik zgody na kontakt jest włączony, pokazujemy pole kontaktowe.
-        // Gdy wyłączony – ukrywamy je i czyszczymy.
         swConsent.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 tvLabelContact.setVisibility(View.VISIBLE);
@@ -63,32 +65,31 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 tvLabelContact.setVisibility(View.GONE);
                 etContact.setVisibility(View.GONE);
-                etContact.setText(""); // czyszczenie pola
+                etContact.setText("");
             }
         });
 
-        // Kliknięcie przycisku wysyłania uruchamia walidację
         btnSubmit.setOnClickListener(v -> {
             if (validateForm()) {
                 askForConfirmation();
             }
         });
+
+        // Obsługa przycisku czyszczenia
+        btnReset.setOnClickListener(v -> askForClearConfirmation());
     }
 
     private boolean validateForm() {
-        // 1. Walidacja Spinnera (pozycja 0 to "-- wybierz kategorię --")
         if (spCategory.getSelectedItemPosition() == 0) {
             Toast.makeText(this, R.string.error_category, Toast.LENGTH_SHORT).show();
             return false;
         }
 
-        // 2. Walidacja RadioGroup (czy zaznaczono priorytet)
         if (rgPriority.getCheckedRadioButtonId() == -1) {
             Toast.makeText(this, R.string.error_priority, Toast.LENGTH_SHORT).show();
             return false;
         }
 
-        // 3. Walidacja opisu usterki (EditText)
         String description = etDescription.getText().toString().trim();
         if (description.isEmpty()) {
             etDescription.setError(getString(R.string.error_description));
@@ -96,7 +97,6 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
 
-        // 4. Walidacja zależności (jeśli zgoda jest zaznaczona, kontakt nie może być pusty)
         if (swConsent.isChecked()) {
             String contact = etContact.getText().toString().trim();
             if (contact.isEmpty()) {
@@ -106,11 +106,10 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        return true; // Wszystkie pola poprawne!
+        return true;
     }
 
     private void askForConfirmation() {
-        // Okno dialogowe pytające o potwierdzenie
         new AlertDialog.Builder(this)
                 .setTitle(R.string.confirm_title)
                 .setMessage(R.string.confirm_message)
@@ -120,16 +119,61 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void submitForm() {
-        // Wyświetlenie podsumowania i paska Snackbar z opcją cofnięcia
         tvSummary.setText(buildSummary());
-
         Snackbar.make(findViewById(R.id.main), R.string.sent, Snackbar.LENGTH_LONG)
                 .setAction(R.string.undo, v -> tvSummary.setText(""))
                 .show();
     }
 
+    // Okno dialogowe potwierdzające wyczyszczenie
+    private void askForClearConfirmation() {
+        new AlertDialog.Builder(this)
+                .setTitle("Wyczyść formularz")
+                .setMessage("Czy na pewno chcesz wyczyścić wszystkie pola formularza?")
+                .setPositiveButton("Tak", (dialog, which) -> clearFormWithBackup())
+                .setNegativeButton("Anuluj", null)
+                .show();
+    }
+
+    // Zapamiętanie stanu i faktyczne wyczyszczenie formularza
+    private void clearFormWithBackup() {
+        // 1. Zapisanie obecnego stanu do zmiennych (kopia zapasowa przed skasowaniem)
+        savedCategoryPos = spCategory.getSelectedItemPosition();
+        savedPriorityId = rgPriority.getCheckedRadioButtonId();
+        savedDescription = etDescription.getText().toString();
+        savedConsent = swConsent.isChecked();
+        savedContact = etContact.getText().toString();
+        savedSummary = tvSummary.getText().toString();
+
+        // 2. Wyczyszczenie kontrolek
+        spCategory.setSelection(0);
+        rgPriority.clearCheck();
+        etDescription.setText("");
+        swConsent.setChecked(false);
+        etContact.setText("");
+        tvSummary.setText("");
+
+        // 3. Usunięcie komunikatów błędów z pól
+        etDescription.setError(null);
+        etContact.setError(null);
+
+        // 4. Pokazanie Snackbar z akcją cofnięcia (Undo)
+        Snackbar.make(findViewById(R.id.main), "Formularz został wyczyszczony", Snackbar.LENGTH_LONG)
+                .setAction("Cofnij", v -> restoreFormState())
+                .show();
+    }
+
+    // Przywrócenie stanu formularza z kopii zapasowej po kliknięciu "Cofnij"
+    private void restoreFormState() {
+        spCategory.setSelection(savedCategoryPos);
+        rgPriority.check(savedPriorityId); // jeśli było -1, Android to zignoruje lub wyczyści
+        etDescription.setText(savedDescription);
+        swConsent.setChecked(savedConsent);
+        etContact.setText(savedContact);
+        tvSummary.setText(savedSummary);
+    }
+
     private String buildSummary() {
-        // Odczyt wybranego priorytetu z RadioGroup
         int priorityId = rgPriority.getCheckedRadioButtonId();
         String priorityStr = "";
         if (priorityId == R.id.rbLow) {
@@ -142,7 +186,6 @@ public class MainActivity extends AppCompatActivity {
 
         String contactInfo = swConsent.isChecked() ? etContact.getText().toString().trim() : "brak";
 
-        // Składanie końcowego tekstu podsumowania
         return getString(R.string.summary_format,
                 spCategory.getSelectedItem().toString(),
                 priorityStr,
