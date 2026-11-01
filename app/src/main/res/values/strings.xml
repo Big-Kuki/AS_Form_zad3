@@ -1,0 +1,44 @@
+<resources>
+    <string name="app_name">Zgłoszenie usterki</string>
+
+    <string name="header">Formularz usterki</string>
+    <string name="label_category">Kategoria usterki</string>
+    <string name="label_priority">Priorytet</string>
+    <string name="label_description">Opis usterki</string>
+    <string name="hint_description">Opisz szczegółowo problem...</string>
+    <string name="label_contact">Dane kontaktowe (opcjonalnie)</string>
+    <string name="hint_contact">E-mail lub telefon</string>
+
+    <string name="priority_low">Niski</string>
+    <string name="priority_medium">Średni</string>
+    <string name="priority_high">Wysoki / Krytyczny</string>
+
+    <string name="consent_contact">Wyrażam zgodę na kontakt w sprawie usterki</string>
+    <string name="btn_submit">WYŚLIJ ZGŁOSZENIE</string>
+
+    <!-- Błędy walidacji -->
+    <string name="error_category">Wybierz kategorię usterki</string>
+    <string name="error_priority">Zaznacz priorytet</string>
+    <string name="error_description">Opis usterki nie może być pusty</string>
+    <string name="error_consent">Musisz wyrazić zgodę na kontakt</string>
+
+    <!-- Komunikaty -->
+    <string name="confirm_title">Potwierdzenie</string>
+    <string name="confirm_message">Czy na pewno chcesz wysłać zgłoszenie usterki?</string>
+    <string name="yes">Tak</string>
+    <string name="no">Anuluj</string>
+
+    <string name="sent">Zgłoszenie zostało wysłane</string>
+    <string name="undo">Cofnij</string>
+
+    <string name="summary_format">Kategoria: %1$s\nPriorytet: %2$s\nOpis: %3$s\nKontakt: %4$s</string>
+
+    <!-- Lista do Spinnera -->
+    <string-array name="defect_categories">
+        <item>-- wybierz kategorię --</item>
+        <item>Infrastruktura IT / Sieć</item>
+        <item>Sprzęt komputerowy</item>
+        <item>Oprogramowanie</item>
+        <item>Inne</item>
+    </string-array>
+</resources>
